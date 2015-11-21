@@ -38,7 +38,7 @@ type
     procedure Recognition_In_For();
     procedure Search_Input_Output();
     procedure Search_Modified();
-    procedure Search(x: Integer; LineFromMemo: String; k: Integer; send: Integer);
+    procedure Search(Overlap: Integer; LineFromMemo: String; k: Integer; send: Integer);
     procedure Search_Operation();
     procedure ButtonAnalysisClick(Sender: TObject);
 
@@ -50,7 +50,7 @@ type
     { Public declarations }
   end;
 const
-  MaxArrayOfEachType = 100;   //   Максивальный размер массива каждого из типов
+  MaxArrayOfEachType = 100;
 
 var
   Metric: TMetric;
@@ -88,7 +88,7 @@ begin
 end;
 
 
-//Преобразование кода (очистка)
+//Преобразование кода
 procedure TMetric.ConvertCode();
 const
   EmptySymbol = '';
@@ -164,7 +164,7 @@ begin
 
 end;
 
- //Распознание переменных и создание массива из них НЕ в for
+
 procedure TMetric.Recognition();
 const
   typeChar = 'char'; typeShort = 'short'; typeInt = 'int';
@@ -178,29 +178,29 @@ const
   SymbolOfZero = '0'; SymbolOfUnit = '1'; SymbolOfDeuces = '2'; SymbolOfThee = '3'; SymbolOfFour = '4';
   SymbolOfFive = '5'; SymbolOfSix = '6'; SymbolOfSeven = '7'; SymbolOfEight = '8'; SymbolOfNine = '9';
 var
-  i, j, k, z, count, NumberOfCommas,x, y, h : Integer;
+  i, j, k, temporary, count, NumberOfCommas,x,interim, LengthOfTempSymbolString : Integer;
   LineFromMemo, TempTypesString, TempString, TempSymbolsString : String;
 begin
-  LineFromMemo := EmptySymbol; //Строка из мемо
-  TempTypesString := EmptySymbol;   // Временная строка
-  TempString := EmptySymbol;    //Временная строка
-  TempSymbolsString :=  EmptySymbol;   //Временная строка
-  count := 0;                                       //Счётчик массива переменных
-  NumberOfCommas := 0;     //Кол-во запятых
+  LineFromMemo := EmptySymbol;
+  TempTypesString := EmptySymbol;
+  TempString := EmptySymbol;
+  TempSymbolsString :=  EmptySymbol;
+  count := 0;
+  NumberOfCommas := 0;
   for i := 1 to Memo.Lines.Count-2 do
   begin
-    k := 0;
+    temporary := 0;
     LineFromMemo := Memo.Lines[i];
 
     for j:=1 to length(LineFromMemo) do
       if LineFromMemo[j] = SpaceSymbol then break;
     TempTypesString := copy(LineFromMemo,1,j-1);
 
-    if (TempTypesString = typeChar) or (TempTypesString = typeShort) or (TempTypesString = typeInt)  then k := 1;
-    if (TempTypesString = typeLong) or (TempTypesString = typeFloat) or (TempTypesString = typeDouble)  then k := 1;
-    if (TempTypesString = typeVoid) or (TempTypesString = typeSigned) or (TempTypesString = typeUnsigned)  then k := 1;
+    if (TempTypesString = typeChar) or (TempTypesString = typeShort) or (TempTypesString = typeInt)  then temporary := 1;
+    if (TempTypesString = typeLong) or (TempTypesString = typeFloat) or (TempTypesString = typeDouble)  then temporary := 1;
+    if (TempTypesString = typeVoid) or (TempTypesString = typeSigned) or (TempTypesString = typeUnsigned)  then temporary := 1;
 
-    if k = 1 then
+    if temporary = 1 then
     begin
       TempString := copy(LineFromMemo,j+1,length(LineFromMemo)-j);
       for x := 1 to length(TempString) do
@@ -208,60 +208,60 @@ begin
         if TempString[x] = CommaSymbol then inc(NumberOfCommas);
         if TempString[x] = BraceRSymbol then break;
       end;
-      y := 0;
-      z := 1;
+      interim := 0;
+      k := 1;
 
-      while y <= NumberOfCommas do
+      while interim <= NumberOfCommas do
       begin
-        for x := z to length(TempString) do
+        for x := k to length(TempString) do
           if (TempString[x] = CommaSymbol) then break;
-        TempSymbolsString := copy(TempString,z,x-z);
-        if TempString[x+1] = SpaceSymbol then z := x+2;
-        if TempString[x+1] <> SpaceSymbol then z := x+1;
-        h := 1;
-        while h <= length(TempSymbolsString) do
+        TempSymbolsString := copy(TempString,k,x-k);
+        if TempString[x+1] = SpaceSymbol then k := x+2;
+        if TempString[x+1] <> SpaceSymbol then k := x+1;
+        LengthOfTempSymbolString := 1;
+        while LengthOfTempSymbolString <= length(TempSymbolsString) do
         begin
-          if (TempSymbolsString[h] = SquareBracketRSymbol) or (TempSymbolsString[h] = SquareBracketLSymbol) then
+          if (TempSymbolsString[LengthOfTempSymbolString] = SquareBracketRSymbol) or (TempSymbolsString[LengthOfTempSymbolString] = SquareBracketLSymbol) then
           begin
-            Delete(TempSymbolsString,h,1);
-            h := h-2;
+            Delete(TempSymbolsString,LengthOfTempSymbolString,1);
+            LengthOfTempSymbolString := LengthOfTempSymbolString-2;
           end;
-          if (TempSymbolsString[h] = EqualSymbol) or (TempSymbolsString[h] = SemicolonSymbol) or (TempSymbolsString[h] = SpaceSymbol) then
+          if (TempSymbolsString[LengthOfTempSymbolString] = EqualSymbol) or (TempSymbolsString[LengthOfTempSymbolString] = SemicolonSymbol) or (TempSymbolsString[LengthOfTempSymbolString] = SpaceSymbol) then
           begin
-            Delete(TempSymbolsString,h,1);
-            h := h-2;
+            Delete(TempSymbolsString,LengthOfTempSymbolString,1);
+            LengthOfTempSymbolString := LengthOfTempSymbolString-2;
           end;
-          if (TempSymbolsString[h] = SymbolOfZero) or (TempSymbolsString[h] = SymbolOfUnit) or (TempSymbolsString[h] = SymbolOfDeuces) then
+          if (TempSymbolsString[LengthOfTempSymbolString] = SymbolOfZero) or (TempSymbolsString[LengthOfTempSymbolString] = SymbolOfUnit) or (TempSymbolsString[LengthOfTempSymbolString] = SymbolOfDeuces) then
           begin
-            Delete(TempSymbolsString,h,1);
-            h := h-2;
+            Delete(TempSymbolsString,LengthOfTempSymbolString,1);
+            LengthOfTempSymbolString := LengthOfTempSymbolString-2;
           end;
-          if (TempSymbolsString[h] = SymbolOfThee) or (TempSymbolsString[h] = SymbolOfFour) then
+          if (TempSymbolsString[LengthOfTempSymbolString] = SymbolOfThee) or (TempSymbolsString[LengthOfTempSymbolString] = SymbolOfFour) then
           begin
-            Delete(TempSymbolsString,h,1);
-            h := h-2;
+            Delete(TempSymbolsString,LengthOfTempSymbolString,1);
+            LengthOfTempSymbolString := LengthOfTempSymbolString-2;
           end;
-          if (TempSymbolsString[h] = SymbolOfFive) or (TempSymbolsString[h] = SymbolOfSix) then
+          if (TempSymbolsString[LengthOfTempSymbolString] = SymbolOfFive) or (TempSymbolsString[LengthOfTempSymbolString] = SymbolOfSix) then
           begin
-            Delete(TempSymbolsString,h,1);
-            h := h-2;
+            Delete(TempSymbolsString,LengthOfTempSymbolString,1);
+            LengthOfTempSymbolString := LengthOfTempSymbolString-2;
           end;
-          if (TempSymbolsString[h] = SymbolOfSeven) or (TempSymbolsString[h] = SymbolOfEight) or (TempSymbolsString[h] = SymbolOfNine) then
+          if (TempSymbolsString[LengthOfTempSymbolString] = SymbolOfSeven) or (TempSymbolsString[LengthOfTempSymbolString] = SymbolOfEight) or (TempSymbolsString[LengthOfTempSymbolString] = SymbolOfNine) then
           begin
-            Delete(TempSymbolsString,h,1);
-            h := h-2;
+            Delete(TempSymbolsString,LengthOfTempSymbolString,1);
+            LengthOfTempSymbolString := LengthOfTempSymbolString-2;
           end;
-          if (TempSymbolsString[h] = BraceRSymbol) or (TempSymbolsString[h] = BraceLSymbol)then
+          if (TempSymbolsString[LengthOfTempSymbolString] = BraceRSymbol) or (TempSymbolsString[LengthOfTempSymbolString] = BraceLSymbol)then
           begin
-            Delete(TempSymbolsString,h,1);
-            h := h-2;
+            Delete(TempSymbolsString,LengthOfTempSymbolString,1);
+            LengthOfTempSymbolString := LengthOfTempSymbolString-2;
           end;
-          inc(h);
+          inc(LengthOfTempSymbolString);
         end;
 
         inc(count);
         ArrayValue[count] := TempSymbolsString;
-        inc(y);
+        inc(interim);
         TempSymbolsString := EmptySymbol;
       end;
     end;
@@ -272,7 +272,7 @@ begin
   end;
 end;
 
-//Распознание переменных и создание массива из них в for
+
 procedure TMetric.Recognition_In_For();
 const
   typeChar = 'char'; typeShort = 'short'; typeInt = 'int';
@@ -283,13 +283,13 @@ const
   SpaceSymbol = ' ';
   SemicolonSymbol = ';';
 var
-  i,  k, x, h : Integer;
+  i,  j, k, temporary : Integer;
   LineFromMemo, TempSymbolsString, TypeInFor : String;
   Overlap : Integer;
 begin
   LineFromMemo := EmptySymbol;
   TypeInFor := EmptySymbol;
-  h := 0;
+  temporary := 0;
   for i := 1 to Memo.Lines.Count-2 do
   begin
     LineFromMemo := Memo.Lines[i];
@@ -300,29 +300,29 @@ begin
     if TempSymbolsString <> EmptySymbol then
     begin
 
+      for j := 1 to length(TempSymbolsString) do
+        if TempSymbolsString[j] = SemicolonSymbol then break;
+      Delete(TempSymbolsString,j-4,length(TempSymbolsString)-j+5);
+
       for k := 1 to length(TempSymbolsString) do
-        if TempSymbolsString[k] = SemicolonSymbol then break;
-      Delete(TempSymbolsString,k-4,length(TempSymbolsString)-k+5);
+        if TempSymbolsString[k] = SpaceSymbol then break;
+      TypeInFor := copy(TempSymbolsString,1,k-1);   //хранит тип в фор
 
-      for x := 1 to length(TempSymbolsString) do
-        if TempSymbolsString[x] = SpaceSymbol then break;
-      TypeInFor := copy(TempSymbolsString,1,x-1);   //хранит тип в фор
+      if (TypeInFor = typeChar) or (TypeInFor = typeShort) or (TypeInFor = typeInt)  then temporary := k;
+      if (TypeInFor = typeLong) or (TypeInFor = typeFloat) or (TypeInFor = typeDouble)  then temporary := k;
+      if (TypeInFor = typeVoid) or (TypeInFor = typeSigned) or (TypeInFor = typeUnsigned)  then temporary := k;
 
-      if (TypeInFor = typeChar) or (TypeInFor = typeShort) or (TypeInFor = typeInt)  then h := x;
-      if (TypeInFor = typeLong) or (TypeInFor = typeFloat) or (TypeInFor = typeDouble)  then h := x;
-      if (TypeInFor = typeVoid) or (TypeInFor = typeSigned) or (TypeInFor = typeUnsigned)  then h := x;
-
-      if h <> 0 then
+      if temporary <> 0 then
       begin
-        for x := 1 to length(TempSymbolsString) do
-          if TempSymbolsString[x] = SpaceSymbol then break;
-        Delete(TempSymbolsString,1,x);
-        for x := 1 to MaxArrayOfEachType do
-          if ArrayValue[x] = EmptySymbol then break;
-        ArrayValue[x] := TempSymbolsString;
+        for k := 1 to length(TempSymbolsString) do
+          if TempSymbolsString[k] = SpaceSymbol then break;
+        Delete(TempSymbolsString,1,k);
+        for k := 1 to MaxArrayOfEachType do
+          if ArrayValue[k] = EmptySymbol then break;
+        ArrayValue[k] := TempSymbolsString;
       end;
     end;
-    h := 0;
+    temporary := 0;
     TempSymbolsString := EmptySymbol;
     LineFromMemo := EmptySymbol;
     TypeInFor := EmptySymbol;
@@ -337,7 +337,7 @@ const
   Printf = 'printf';
   Scanf = 'scanf';
 var
-  i, j, k, z, x, h, count, LocationVariableInP : Integer;
+  i, j, k, coincidence, PrintOrScanffoverlap, LengthOfMemoLine, count, LocationVariableInP : Integer;
   LineFromMemo, ArrayOfTempVariables : String;
 begin
   LineFromMemo := EmptySymbol;
@@ -347,21 +347,21 @@ begin
 
   for j := 1 to k do
   begin
-    ArrayOfTempVariables := ArrayValue[j]; //Массив переменных(временных)
+    ArrayOfTempVariables := ArrayValue[j];
 
     for i := 1 to Memo.Lines.Count-2 do
     begin
       LineFromMemo := Memo.Lines[i];
-      z := Pos(ArrayOfTempVariables,LineFromMemo);
+      coincidence := Pos(ArrayOfTempVariables,LineFromMemo);
 
-      if z > 0 then
+      if coincidence > 0 then
       begin
-        x := Pos(Printf, LineFromMemo);
-        if x > 0 then
+        PrintOrScanffoverlap := Pos(Printf, LineFromMemo);
+        if PrintOrScanffoverlap > 0 then
         begin
-          for h := 1 to length(LineFromMemo) do
-            if LineFromMemo[h] = CommaSymbol then break;
-          Delete(LineFromMemo,1,h);
+          for LengthOfMemoLine := 1 to length(LineFromMemo) do
+            if LineFromMemo[LengthOfMemoLine] = CommaSymbol then break;
+          Delete(LineFromMemo,1,LengthOfMemoLine);
           count := Pos(ArrayOfTempVariables, LineFromMemo); //местоположение переменной в printf
           if count > 0 then
           begin
@@ -373,12 +373,12 @@ begin
           end;
         end;
 
-        x := Pos(Scanf, LineFromMemo);
-        if x > 0 then
+        PrintOrScanffoverlap := Pos(Scanf, LineFromMemo);
+        if PrintOrScanffoverlap > 0 then
         begin
-          for h := 1 to length(LineFromMemo) do
-            if LineFromMemo[h] = ',' then break;
-          Delete(LineFromMemo,1,h);
+          for LengthOfMemoLine := 1 to length(LineFromMemo) do
+            if LineFromMemo[LengthOfMemoLine] = ',' then break;
+          Delete(LineFromMemo,1,LengthOfMemoLine);
           count := Pos(ArrayOfTempVariables, LineFromMemo);
           if count > 0 then
           begin
@@ -395,7 +395,7 @@ begin
   end;
 end;
 
-//Поиск модифицируемых переменных (M)
+
 procedure TMetric.Search_Modified();
 const
   EmptySymbol = '';
@@ -407,7 +407,7 @@ const
   DoublePlus = '++';
   DoubleMinus = '--';
 var
-  i, j, k, x, h, LocationVariableInM: Integer;
+  i, j, k, SymbolsOverlap, h, LocationVariableInM: Integer;
   LineFromMemo, TempString : String;
 begin
   LineFromMemo := EmptySymbol;
@@ -420,12 +420,12 @@ begin
     TempString := EmptySymbol;
     LineFromMemo := Memo.Lines[i];
 
-    x := Pos(EqualSymbol, LineFromMemo);
-    if x > 0 then
+    SymbolsOverlap := Pos(EqualSymbol, LineFromMemo);
+    if SymbolsOverlap > 0 then
     begin
-      for h := x-2 downto 1 do
+      for h := SymbolsOverlap-2 downto 1 do
         if (LineFromMemo[h] = SpaceSymbol) or (LineFromMemo[h] = Parenthesis) then break;
-      TempString := copy(LineFromMemo,h+1,x-2);
+      TempString := copy(LineFromMemo,h+1,SymbolsOverlap-2);
 
       for h:= 1 to length(TempString) do
         if TempString[h] = SpaceSymbol then break;
@@ -444,12 +444,12 @@ begin
           Variables_M.Text := Variables_M.Text + CommaAndSpaceSymbols + TempString;
     end;
 
-    x := Pos(DoublePlus, LineFromMemo);
-    if x > 0 then
+    SymbolsOverlap := Pos(DoublePlus, LineFromMemo);
+    if SymbolsOverlap > 0 then
     begin
-      for h := x downto 1 do
+      for h := SymbolsOverlap downto 1 do
         if (LineFromMemo[h] = SpaceSymbol)then break;
-      TempString := copy(LineFromMemo,h+1,x-h-1);
+      TempString := copy(LineFromMemo,h+1,SymbolsOverlap-h-1);
 
       for h := 1 to k do
         if TempString = ArrayValue[h] then break;
@@ -460,12 +460,12 @@ begin
           Variables_M.Text := Variables_M.Text + CommaAndSpaceSymbols + TempString;
     end;
 
-    x := Pos(DoubleMinus, LineFromMemo);
-    if x > 0 then
+    SymbolsOverlap := Pos(DoubleMinus, LineFromMemo);
+    if SymbolsOverlap > 0 then
     begin
-      for h := x downto 1 do
+      for h := SymbolsOverlap downto 1 do
         if (LineFromMemo[h] = SpaceSymbol)then break;
-      TempString := copy(LineFromMemo,h+1,x-h-1);
+      TempString := copy(LineFromMemo,h+1,SymbolsOverlap-h-1);
 
       for h := 1 to k do
         if TempString = ArrayValue[h] then break;
@@ -481,7 +481,7 @@ begin
 end;
 
 //Поиск условий для while
-procedure TMetric.Search(x: Integer; LineFromMemo: String; k: Integer; send: Integer);
+procedure TMetric.Search(Overlap: Integer; LineFromMemo: String; k: Integer; send: Integer);
 const
   EmptySymbol = '';
   SpaceSymbol = ' ';
@@ -492,89 +492,89 @@ const
   SquareBracketRSymbol = '[';
 
 var
-  LocationVariableInC, h, z : Integer;
+  LocationVariableInC, i, TemporaryValues : Integer;
   FirstVariableOfCondition, SecVariableOfCondition : String;
 begin
   if send = 0 then
   begin
-    for h := 1 to length(LineFromMemo) do
-      if LineFromMemo[h] = SemicolonSymbol then break;
-    Delete(LineFromMemo,1,h+1);
+    for i := 1 to length(LineFromMemo) do
+      if LineFromMemo[i] = SemicolonSymbol then break;
+    Delete(LineFromMemo,1,i+1);
 
-    for h := 1 to length(LineFromMemo) do
-      if LineFromMemo[h] = SemicolonSymbol then break;
-    Delete(LineFromMemo,h,length(LineFromMemo)-h+1);
+    for i := 1 to length(LineFromMemo) do
+      if LineFromMemo[i] = SemicolonSymbol then break;
+    Delete(LineFromMemo,i,length(LineFromMemo)-i+1);
   end;
 
   if send = 1 then
   begin
-    for h := x+2 to length(LineFromMemo) do
-      if LineFromMemo[h] = ParenthesisR then break;
-    Delete(LineFromMemo,1,h);
+    for i := Overlap+2 to length(LineFromMemo) do
+      if LineFromMemo[i] = ParenthesisR then break;
+    Delete(LineFromMemo,1,i);
   end;
 
   if send = 2 then
   begin
-    for h := x+5 to length(LineFromMemo) do
-      if LineFromMemo[h] = ParenthesisR then break;
-    Delete(LineFromMemo,1,h);
+    for i := Overlap+5 to length(LineFromMemo) do
+      if LineFromMemo[i] = ParenthesisR then break;
+    Delete(LineFromMemo,1,i);
   end;
 
   if (send = 1) or (send = 2) then
   begin
-  for h := 1 to length(LineFromMemo) do
-    if LineFromMemo[h] = ParenthesisL then break;
-  Delete(LineFromMemo,h,length(LineFromMemo)-h+1);
+  for i := 1 to length(LineFromMemo) do
+    if LineFromMemo[i] = ParenthesisL then break;
+  Delete(LineFromMemo,i,length(LineFromMemo)-i+1);
   end;
 
-  for h := 1 to length(LineFromMemo) do
-    if LineFromMemo[h] = SpaceSymbol then break;
-  FirstVariableOfCondition := Copy(LineFromMemo,1,h-1);   //Первая переменная условия
+  for i := 1 to length(LineFromMemo) do
+    if LineFromMemo[i] = SpaceSymbol then break;
+  FirstVariableOfCondition := Copy(LineFromMemo,1,i-1);   //Первая переменная условия
 
-  for h := length(LineFromMemo) downto 1 do
-    if LineFromMemo[h] = SpaceSymbol then break;
-  SecVariableOfCondition := Copy(LineFromMemo,h+1,length(LineFromMemo)-h+1);
+  for i := length(LineFromMemo) downto 1 do
+    if LineFromMemo[i] = SpaceSymbol then break;
+  SecVariableOfCondition := Copy(LineFromMemo,i+1,length(LineFromMemo)-i+1);
 
   if send = 1 then
   begin
-    for h := 1 to length(SecVariableOfCondition) do
-      if SecVariableOfCondition[h] = SquareBracketRSymbol then break;
-    Delete(SecVariableOfCondition,h,length(SecVariableOfCondition)-h+1);
+    for i := 1 to length(SecVariableOfCondition) do
+      if SecVariableOfCondition[i] = SquareBracketRSymbol then break;
+    Delete(SecVariableOfCondition,i,length(SecVariableOfCondition)-i+1);
   end;
 
-  z := 0;
-  for h := 1 to k do
-    if FirstVariableOfCondition = ArrayValue[h] then
+  TemporaryValues := 0;
+  for i := 1 to k do
+    if FirstVariableOfCondition = ArrayValue[i] then
     begin
-      z := 1;
+      TemporaryValues := 1;
       break;
     end;
   LocationVariableInC := Pos(FirstVariableOfCondition, Variables_C.Text);
-  if (LocationVariableInC = 0) and (z = 1) then
+  if (LocationVariableInC = 0) and (TemporaryValues = 1) then
     if Variables_C.Text = EmptySymbol then Variables_C.Text := FirstVariableOfCondition
     else
       Variables_C.Text := Variables_C.Text + CommaAndSpaceSymbols + FirstVariableOfCondition;
 
-  z := 0;
-  for h := 1 to k do
-    if SecVariableOfCondition = ArrayValue[h] then
+  TemporaryValues := 0;
+  for i := 1 to k do
+    if SecVariableOfCondition = ArrayValue[i] then
     begin
-      z := 1;
+      TemporaryValues := 1;
       break;
     end;
   LocationVariableInC := Pos(SecVariableOfCondition, Variables_C.Text);
-  if (LocationVariableInC = 0) and (z = 1) then
+  if (LocationVariableInC = 0) and (TemporaryValues = 1) then
     if Variables_C.Text = EmptySymbol then Variables_C.Text := SecVariableOfCondition
     else
       Variables_C.Text := Variables_C.Text + CommaAndSpaceSymbols + SecVariableOfCondition;
 end;
 
-//Поиск переменных управления (С)
+
 procedure TMetric.Search_Operation();
 const
   EmptySymbol = '';
 var
-  i, j, k, x : Integer;
+  i, j, k, Overlap : Integer;
   LineFromMemo : String;
 begin
   LineFromMemo := EmptySymbol;
@@ -585,14 +585,14 @@ begin
   for i := 1 to Memo.Lines.Count-2 do
   begin
     LineFromMemo := Memo.Lines[i];
-    x := Pos('for', LineFromMemo);
-    if x > 0 then Search(x, LineFromMemo, k, 0);
+    Overlap := Pos('for', LineFromMemo);
+    if Overlap > 0 then Search(Overlap, LineFromMemo, k, 0);
 
-    x := Pos('if', LineFromMemo);
-    if x > 0 then Search(x, LineFromMemo, k, 1);
+    Overlap := Pos('if', LineFromMemo);
+    if Overlap > 0 then Search(Overlap, LineFromMemo, k, 1);
 
-    x := Pos('while', LineFromMemo);
-    if x > 0 then Search(x, LineFromMemo, k, 2);
+    Overlap := Pos('while', LineFromMemo);
+    if Overlap > 0 then Search(Overlap, LineFromMemo, k, 2);
   end;
 end;
 
@@ -610,7 +610,7 @@ const
   MassageVariableOperation = 'Переменных типа C = ';
   MassageVariableParasites = 'Переменных типа T = ';
 var
-  i, j, k, p_count, m_count, c_count, t_count : Integer;
+  i, j, Overlap, p_count, m_count, c_count, t_count : Integer;
   Result : Real;
   TempString : String;
 begin
@@ -636,8 +636,8 @@ begin
   TempString := Variables_P.Text;
   for j := 1 to i do
   begin
-    k := Pos(ArrayValue[j], TempString);
-    if (k = 0) and (ArrayValue[j] <> EmptySymbol) then
+    Overlap := Pos(ArrayValue[j], TempString);
+    if (Overlap = 0) and (ArrayValue[j] <> EmptySymbol) then
     begin
       inc(p_count);
       Array_Not_Found_P[p_count] := ArrayValue[j];
@@ -648,8 +648,8 @@ begin
   TempString := Variables_M.Text;
   for j := 1 to p_count do
   begin
-    k := Pos(Array_Not_Found_P[j], TempString);
-    if (k = 0) and (Array_Not_Found_P[j] <> EmptySymbol) then
+    Overlap := Pos(Array_Not_Found_P[j], TempString);
+    if (Overlap = 0) and (Array_Not_Found_P[j] <> EmptySymbol) then
     begin
       inc(m_count);
       Array_Not_Found_M[m_count] := Array_Not_Found_P[j];
@@ -660,8 +660,8 @@ begin
   TempString := Variables_C.Text;
   for j := 1 to m_count do
   begin
-    k := Pos(Array_Not_Found_M[j], TempString);
-    if (k = 0) and (Array_Not_Found_M[j] <> EmptySymbol) then
+    Overlap := Pos(Array_Not_Found_M[j], TempString);
+    if (Overlap = 0) and (Array_Not_Found_M[j] <> EmptySymbol) then
     begin
       inc(c_count);
       Array_Not_Found_C[c_count] := Array_Not_Found_M[j];
